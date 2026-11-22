@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>تسجيل الحضور</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;
+ background:#0f766e;color:#111827;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+.box{background:#fff;border-radius:22px;width:100%;max-width:460px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+h1{margin:0 0 4px;font-size:21px;text-align:center}
+p.s{margin:0 0 18px;text-align:center;color:#6b7280;font-size:14px}
+input{width:100%;padding:16px;font-size:19px;border:2px solid #e5e7eb;border-radius:14px;font-family:inherit}
+input:focus{outline:0;border-color:#0f766e}
+button{width:100%;margin-top:12px;padding:18px;font-size:19px;font-weight:700;font-family:inherit;
+ border:0;border-radius:14px;background:#0f766e;color:#fff}
+button:disabled{opacity:.6}
+ul{list-style:none;margin:12px 0 0;padding:0;max-height:46vh;overflow:auto;border:1px solid #e5e7eb;border-radius:14px}
+li{padding:15px 16px;border-bottom:1px solid #f3f4f6;font-size:17px;font-weight:600}
+li:last-child{border-bottom:0}
+li:active{background:#ecfdf5}
+.done{text-align:center;padding:14px 0}
+.done .ic{font-size:72px;line-height:1}
+.done h2{margin:8px 0 4px;font-size:25px;color:#059669}
+.done p{margin:0;color:#6b7280;font-size:15px}
+.err{background:#fef2f2;color:#dc2626;padding:12px;border-radius:12px;margin-top:12px;font-size:14px;text-align:center}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="box">
+
+  <div id="form">
+    <h1>تسجيل الحضور</h1>
+    <p class="s" id="sub">اختر اسمك من القائمة</p>
+    <input id="q" placeholder="ابحث عن اسمك…" autocomplete="off" autocorrect="off">
+    <ul id="list"></ul>
+    <button id="send" class="hide">تسجيل حضوري</button>
+    <div id="msg" class="err hide"></div>
+  </div>
+
+  <div id="ok" class="hide done">
+    <div class="ic">✅</div>
+    <h2 id="okName">تم</h2>
+    <p id="okMsg">تم تسجيل حضورك</p>
+  </div>
+
+</div>
+<script>
+(function(){
+var names=[], chosen='';
+var q=document.getElementById('q'), list=document.getElementById('list'),
+    send=document.getElementById('send'), msg=document.getElementById('msg');
+
+function show(e){ msg.textContent=e; msg.classList.remove('hide'); }
+function hideErr(){ msg.classList.add('hide'); }
+
+function draw(){
+  var t=q.value.trim();
+  list.innerHTML='';
+  if(!names.length){ list.classList.add('hide'); send.classList.remove('hide'); return; }
+  list.classList.remove('hide');
+  var f=names.filter(function(n){ return !t || n.indexOf(t)>-1; }).slice(0,60);
+  if(!f.length){ var li=document.createElement('li'); li.style.color='#6b7280';
+    li.textContent='لا يوجد اسم مطابق'; list.appendChild(li); return; }
+  f.forEach(function(n){
+    var li=document.createElement('li'); li.textContent=n;
+    li.onclick=function(){ submit(n); };
+    list.appendChild(li);
+  });
+}
+
+function submit(name){
+  if(!name||name.trim().length<2){ show('اكتب اسمك كاملًا'); return; }
+  hideErr(); send.disabled=true;
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','/checkin?name='+encodeURIComponent(name),true);
+  xhr.timeout=9000;
+  xhr.onload=function(){
+    send.disabled=false;
+    try{
+      var r=JSON.parse(xhr.responseText);
+      if(r.ok){
+        document.getElementById('form').classList.add('hide');
+        document.getElementById('ok').classList.remove('hide');
+        document.getElementById('okName').textContent=r.name;
+        document.getElementById('okMsg').textContent=r.message;
+      } else show(r.message||'تعذّر التسجيل');
+    }catch(e){ show('تعذّر التسجيل، أعد المحاولة'); }
+  };
+  xhr.onerror=function(){ send.disabled=false; show('لا يوجد اتصال بالشبكة — تأكد من بقائك متصلًا'); };
+  xhr.ontimeout=xhr.onerror;
+  xhr.send();
+}
+
+send.onclick=function(){ submit(q.value); };
+q.oninput=draw;
+q.onkeydown=function(e){ if(e.key==='Enter'&&!names.length) submit(q.value); };
+
+var x=new XMLHttpRequest();
+x.open('GET','/names',true);
+x.onload=function(){
+  try{
+    var d=JSON.parse(x.responseText);
+    names=d.names||[];
+  }catch(e){ names=[]; }
+  if(!names.length){
+    document.getElementById('sub').textContent='اكتب اسمك ثم اضغط تسجيل';
+    q.placeholder='اسمك الكامل';
+    send.classList.remove('hide');
+    list.classList.add('hide');
+  }
+  draw();
+};
+x.onerror=function(){
+  document.getElementById('sub').textContent='اكتب اسمك ثم اضغط تسجيل';
+  send.classList.remove('hide');
+};
+x.send();
+})();
+</script>
+</body>
+</html>

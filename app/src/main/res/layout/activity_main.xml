@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:fillViewport="true"
+    android:layoutDirection="rtl">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="تفقّد الحضور"
+            android:textColor="@color/ink"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            android:textColor="@color/muted"
+            android:textSize="13sp"
+            android:gravity="center" />
+
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:text="▶  ابدأ الحصة"
+            android:textSize="19sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/muted"
+            android:textSize="14sp"
+            android:gravity="center" />
+
+        <LinearLayout
+            android:id="@+id/boxQr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:background="@drawable/card_bg"
+            android:padding="14dp"
+            android:layout_marginTop="14dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="يمسح الطالب الرمزين بكاميرا هاتفه بالترتيب"
+                android:textColor="@color/muted"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="① اتصال بالشبكة"
+                        android:textColor="@color/ink"
+                        android:textStyle="bold"
+                        android:textSize="14sp" />
+                    <ImageView
+                        android:id="@+id/imgWifi"
+                        android:layout_width="150dp"
+                        android:layout_height="150dp"
+                        android:layout_marginTop="6dp"
+                        android:contentDescription="رمز الاتصال بالشبكة" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="② فتح صفحة الاسم"
+                        android:textColor="@color/ink"
+                        android:textStyle="bold"
+                        android:textSize="14sp" />
+                    <ImageView
+                        android:id="@+id/imgUrl"
+                        android:layout_width="150dp"
+                        android:layout_height="150dp"
+                        android:layout_marginTop="6dp"
+                        android:contentDescription="رمز فتح الصفحة" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvNet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/muted"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:textIsSelectable="true" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp"
+            android:weightSum="3">
+
+            <TextView
+                android:id="@+id/tvPresent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_bg"
+                android:padding="10dp"
+                android:layout_marginEnd="6dp"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="@color/ok"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvAbsent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_bg"
+                android:padding="10dp"
+                android:layout_marginEnd="6dp"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="@color/bad"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTotal"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_bg"
+                android:padding="10dp"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="@color/ink"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="حاضر           غائب           الإجمالي"
+            android:textColor="@color/muted"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginTop="2dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+
+            <Button
+                android:id="@+id/btnRoster"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:text="قائمة الطلاب"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnExport"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="تصدير CSV"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="سجلّ الحضور"
+            android:textColor="@color/ink"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:id="@+id/listBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="10dp" />
+
+        <TextView
+            android:id="@+id/tvEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="لم يسجّل أحد بعد."
+            android:textColor="@color/muted"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:padding="16dp" />
+
+    </LinearLayout>
+</ScrollView>
