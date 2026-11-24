@@ -33,7 +33,7 @@ li:active{background:#ecfdf5}
 
   <div id="form">
     <h1>تسجيل الحضور</h1>
-    <p class="s" id="sub">اختر اسمك من القائمة</p>
+    <p class="s" id="sub">اختر اسمك من القائمة، أو اكتبه إن لم تجده</p>
     <input id="q" placeholder="ابحث عن اسمك…" autocomplete="off" autocorrect="off">
     <ul id="list"></ul>
     <button id="send" class="hide">تسجيل حضوري</button>
@@ -59,16 +59,31 @@ function hideErr(){ msg.classList.add('hide'); }
 function draw(){
   var t=q.value.trim();
   list.innerHTML='';
-  if(!names.length){ list.classList.add('hide'); send.classList.remove('hide'); return; }
+  if(!names.length){
+    list.classList.add('hide');
+    send.textContent='تسجيل حضوري';
+    send.classList.remove('hide');
+    return;
+  }
   list.classList.remove('hide');
   var f=names.filter(function(n){ return !t || n.indexOf(t)>-1; }).slice(0,60);
-  if(!f.length){ var li=document.createElement('li'); li.style.color='#6b7280';
-    li.textContent='لا يوجد اسم مطابق'; list.appendChild(li); return; }
-  f.forEach(function(n){
-    var li=document.createElement('li'); li.textContent=n;
-    li.onclick=function(){ submit(n); };
+  if(!f.length){
+    var li=document.createElement('li'); li.style.color='#6b7280';
+    li.textContent='لا يوجد اسم مطابق في القائمة';
     list.appendChild(li);
-  });
+  } else {
+    f.forEach(function(n){
+      var li=document.createElement('li'); li.textContent=n;
+      li.onclick=function(){ submit(n); };
+      list.appendChild(li);
+    });
+  }
+  if(t.length>=2){
+    send.textContent='تسجيل بالاسم: ' + t;
+    send.classList.remove('hide');
+  } else {
+    send.classList.add('hide');
+  }
 }
 
 function submit(name){
@@ -96,7 +111,7 @@ function submit(name){
 
 send.onclick=function(){ submit(q.value); };
 q.oninput=draw;
-q.onkeydown=function(e){ if(e.key==='Enter'&&!names.length) submit(q.value); };
+q.onkeydown=function(e){ if(e.key==='Enter') submit(q.value); };
 
 var x=new XMLHttpRequest();
 x.open('GET','/names',true);

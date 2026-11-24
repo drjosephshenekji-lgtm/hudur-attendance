@@ -109,6 +109,52 @@ object Store {
         return out
     }
 
+    @Synchronized
+    fun listDays(): List<String> {
+        val d = dir ?: return ArrayList()
+        val out = ArrayList<String>()
+        val fs = d.listFiles()
+        if (fs != null) {
+            for (f in fs) {
+                val n = f.name
+                if (n.startsWith("att_") && n.endsWith(".json")) {
+                    out.add(n.substring(4, n.length - 5))
+                }
+            }
+        }
+        out.sort()
+        return out
+    }
+
+    @Synchronized
+    fun dayRecord(day: String): LinkedHashMap<String, Long> {
+        if (day == today()) return LinkedHashMap(present)
+        val out = LinkedHashMap<String, Long>()
+        try {
+            val f = file("att_" + day + ".json") ?: return out
+            if (!f.exists()) return out
+            val o = JSONObject(f.readText(Charsets.UTF_8))
+            val it = o.keys()
+            while (it.hasNext()) {
+                val k = it.next()
+                out[k] = o.optLong(k, 0L)
+            }
+        } catch (e: Exception) { }
+        return out
+    }
+
+    @Synchronized
+    fun allNames(): List<String> {
+        val seen = LinkedHashMap<String, String>()
+        for (r in roster) seen[norm(r)] = r
+        for (d in listDays()) {
+            for (k in dayRecord(d).keys) {
+                if (!seen.containsKey(norm(k))) seen[norm(k)] = k
+            }
+        }
+        return ArrayList(seen.values)
+    }
+
     // ---------- persistence ----------
 
     private fun file(name: String): File? {

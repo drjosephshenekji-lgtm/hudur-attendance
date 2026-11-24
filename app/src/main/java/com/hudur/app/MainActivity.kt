@@ -34,6 +34,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import java.io.File
 import java.net.Inet4Address
 import java.net.NetworkInterface
+import java.text.Collator
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -325,50 +326,126 @@ class MainActivity : AppCompatActivity() {
     // ---------------- export ----------------
 
     private fun exportCsv() {
-        val snapE = Store.snapshot()
-        if (snapE.isEmpty() && Store.roster.isEmpty()) {
-            toast("لا توجد بيانات للتصدير")
-            return
+        val options = arrayOf("تفقّد اليوم فقط", "كل الأيام في جدول واحد")
+        AlertDialog.Builder(this)
+            .setTitle("تصدير الجدول")
+            .setItems(options) { _, which ->
+                if (which == 0) exportDay() else exportAll()
+            }
+            .setNegativeButton("إلغاء", null)
+            .show()
+    }
+
+    private fun arabicSorted(names: List<String>): List<String> {
+        val col = Collator.getInstance(Locale("ar"))
+        col.strength = Collator.PRIMARY
+        val list = ArrayList(names)
+        list.sortWith(Comparator { a, b -> col.compare(a, b) })
+        return list
+    }
+
+    private fun writeCsv(fileName: String, content: String): File {
+        val d = File(filesDir, "exports")
+        d.mkdirs()
+        val f = File(d, fileName)
+        f.writeText(content, Charsets.UTF_8)
+        return f
+    }
+
+    private fun shareFile(f: File) {
+        val uri = FileProvider.getUriForFile(this, packageName + ".fileprovider", f)
+        val send = Intent(Intent.ACTION_SEND)
+        send.type = "text/csv"
+        send.putExtra(Intent.EXTRA_STREAM, uri)
+        send.putExtra(Intent.EXTRA_SUBJECT, f.name)
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        startActivity(Intent.createChooser(send, "مشاركة ملف التفقّد"))
+    }
+
+    private fun timeOf(rec: Map<String, Long>, name: String, tf: SimpleDateFormat): String {
+        for (e in rec.entries) {
+            if (Store.norm(e.key) == Store.norm(name)) return tf.format(Date(e.value))
         }
+        return ""
+    }
+
+    private fun exportDay() {
         try {
-            val sb = StringBuilder()
-            sb.append('﻿')
-            sb.append("الاسم,الحالة,الوقت\n")
-            val tf = SimpleDateFormat("HH:mm", Locale.US)
-            if (Store.roster.isEmpty()) {
-                for (e in snapE) {
-                    sb.append(csv(e.first)).append(",حاضر,").append(tf.format(Date(e.second))).append("\n")
-                }
-            } else {
+            val day = Store.today()
+            val rec = Store.dayRecord(day)
+            val names = ArrayList<String>()
+            for (r in Store.roster) names.add(r)
+            for (k in rec.keys) {
+                var known = false
                 for (r in Store.roster) {
-                    var t = ""
-                    for (e in snapE) {
-                        if (Store.norm(e.first) == Store.norm(r)) { t = tf.format(Date(e.second)); break }
-                    }
-                    sb.append(csv(r)).append(if (t.isEmpty()) ",غائب," else ",حاضر,").append(t).append("\n")
+                    if (Store.norm(r) == Store.norm(k)) { known = true; break }
                 }
-                for (e in snapE) {
-                    var known = false
-                    for (r in Store.roster) if (Store.norm(e.first) == Store.norm(r)) { known = true; break }
-                    if (!known) {
-                        sb.append(csv(e.first)).append(",حاضر (خارج القائمة),")
-                            .append(tf.format(Date(e.second))).append("\n")
-                    }
-                }
+                if (!known) names.add(k)
+            }
+            if (names.isEmpty()) {
+                toast("لا توجد بيانات للتصدير")
+                return
             }
 
-            val dir = File(filesDir, "exports")
-            dir.mkdirs()
-            val f = File(dir, "attendance_" + Store.today() + ".csv")
-            f.writeText(sb.toString(), Charsets.UTF_8)
+            val tf = SimpleDateFormat("HH:mm", Locale.US)
+            val sb = StringBuilder()
+            sb.append('\uFEFF')
+            sb.append("م,الاسم,الحالة,وقت التسجيل,التاريخ\n")
+            var i = 1
+            for (n in arabicSorted(names)) {
+                val t = timeOf(rec, n, tf)
+                sb.append(i).append(',').append(csv(n)).append(',')
+                    .append(if (t.isEmpty()) "غائب" else "حاضر").append(',')
+                    .append(t).append(',').append(day).append('\n')
+                i++
+            }
+            shareFile(writeCsv("attendance_" + day + ".csv", sb.toString()))
+        } catch (e: Exception) {
+            toast("تعذّر التصدير: " + e.message)
+        }
+    }
 
-            val uri = FileProvider.getUriForFile(this, packageName + ".fileprovider", f)
-            val send = Intent(Intent.ACTION_SEND)
-            send.type = "text/csv"
-            send.putExtra(Intent.EXTRA_STREAM, uri)
-            send.putExtra(Intent.EXTRA_SUBJECT, "تفقّد " + Store.today())
-            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            startActivity(Intent.createChooser(send, "مشاركة ملف التفقّد"))
+    private fun exportAll() {
+        try {
+            val days = Store.listDays()
+            if (days.isEmpty()) {
+                toast("لا توجد سجلات بعد")
+                return
+            }
+            val names = arabicSorted(Store.allNames())
+            if (names.isEmpty()) {
+                toast("لا توجد أسماء")
+                return
+            }
+
+            val tf = SimpleDateFormat("HH:mm", Locale.US)
+            val recs = LinkedHashMap<String, LinkedHashMap<String, Long>>()
+            for (d in days) recs[d] = Store.dayRecord(d)
+
+            val sb = StringBuilder()
+            sb.append('\uFEFF')
+            sb.append("م,الاسم")
+            for (d in days) sb.append(',').append(d)
+            sb.append(",أيام الحضور,النسبة\n")
+
+            var i = 1
+            for (n in names) {
+                sb.append(i).append(',').append(csv(n))
+                var c = 0
+                for (d in days) {
+                    val rec = recs[d]
+                    val t = if (rec == null) "" else timeOf(rec, n, tf)
+                    if (t.isEmpty()) {
+                        sb.append(",غ")
+                    } else {
+                        sb.append(',').append(t)
+                        c++
+                    }
+                }
+                sb.append(',').append(c).append(',').append(c * 100 / days.size).append("%\n")
+                i++
+            }
+            shareFile(writeCsv("attendance_all_" + Store.today() + ".csv", sb.toString()))
         } catch (e: Exception) {
             toast("تعذّر التصدير: " + e.message)
         }
